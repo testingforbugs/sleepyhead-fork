@@ -13,7 +13,6 @@
 // loader that change loader behaviour or modify channels.
 //********************************************************************************************
 
-#include <QProgressBar>
 #include <QApplication>
 #include <QDir>
 #include <QString>
@@ -162,11 +161,13 @@ bool MD300W1Loader::readDATFile(const QString & path)
     
     if (!file.exists()) {
         qDebug() << "File does not exist: " << path;
+        QMessageBox::warning(nullptr, STR_MessageBox_Error, "<h2>"+tr("Could not find the oximeter file:")+"<br/><br/>"+path+"</h2>");
         return false;
     }
 
     if (!file.open(QFile::ReadOnly)) {
         qDebug() << "Can't open file R/O: " << path;
+        QMessageBox::warning(nullptr, STR_MessageBox_Error, "<h2>"+tr("Could not open the oximeter file:")+"<br/><br/>"+path+"</h2>");
         return false;
     }
 
@@ -191,7 +192,9 @@ bool MD300W1Loader::readDATFile(const QString & path)
     int gap;
     for (int pos = 0; pos < n; ++pos) {
         int i = 3 + (pos * 11);
-        QString datestr = QString().sprintf("%02d/%02d/%02d %02d:%02d:%02d",(unsigned char)data.at(i+4),(unsigned char)data.at(i+5),(unsigned char)data.at(i+3),(unsigned char)data.at(i+6),(unsigned char)data.at(i+7),(unsigned char)data.at(i+8));
+        QString datestr = QString().sprintf("%02d/%02d/%02d %02d:%02d:%02d",
+            (unsigned char)data.at(i+4),(unsigned char)data.at(i+5), (unsigned char)data.at(i+3),  // the date part
+            (unsigned char)data.at(i+6),(unsigned char)data.at(i+7),(unsigned char)data.at(i+8));  // the time part
         QDateTime datetime = QDateTime::fromString(datestr,"MM/dd/yy HH:mm:ss");
         if (datetime.date().year() < 2000) datetime = datetime.addYears(100);
         ts = datetime.toTime_t();
@@ -206,7 +209,7 @@ bool MD300W1Loader::readDATFile(const QString & path)
                 }
             } else {
                 // Create a new session, always for first record
-                qDebug() << "Create session for " << datetime.toString("yyyy.MM.dd HH:mm:ss");
+                qDebug() << "Create session for " << datetime.toString("yyyy-MMM-dd HH:mm:ssap");
                 oxirec = new QVector<OxiRecord>;
                 oxisessions[datetime] = oxirec;
                 m_startTime = datetime; // works for single session files... 

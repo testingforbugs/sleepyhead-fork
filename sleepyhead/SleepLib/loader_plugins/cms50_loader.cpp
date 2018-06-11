@@ -13,6 +13,7 @@
 // that change loader behaviour or modify channels.
 //********************************************************************************************
 
+#include <QProgressBar>
 #include <QApplication>
 #include <QDir>
 #include <QString>
@@ -543,11 +544,13 @@ bool CMS50Loader::readSpoRFile(QString path)
     QFile file(path);
     if (!file.exists()) {
     	qWarning() << "Can't find the oximeter file: " << path;
+        QMessageBox::warning(nullptr, STR_MessageBox_Error, "<h2>"+tr("Could not find the oximeter file:")+"<br/><br/>"+path+"</h2>");
         return false;
     }
 
     if (!file.open(QFile::ReadOnly)) {
     	qWarning() << "Can't open the oximeter file: " << path;
+        QMessageBox::warning(nullptr, STR_MessageBox_Error, "<h2>"+tr("Could not open the oximeter file:")+"<br/><br/>"+path+"</h2>");
         return false;
     }
 
@@ -589,11 +592,14 @@ bool CMS50Loader::readSpoRFile(QString path)
         if (dchr[0]) {
             QString dstr(dchr);
             m_startTime = QDateTime::fromString(dstr, "MM/dd/yy HH:mm:ss");
-            if (m_startTime.date().year() < 2000) { m_startTime = m_startTime.addYears(100); }
+            if (m_startTime.date().year() < 2000) { 
+                m_startTime = m_startTime.addYears(100); 
+            }
         } else {
             m_startTime = QDateTime(QDate::currentDate(), QTime(0,0,0));
+            cms50dplus = true;
         }
-    } else { // !spo2header
+    } else { // it is an spo2header
 
         quint32 samples = 0; // number of samples
 
@@ -610,8 +616,10 @@ bool CMS50Loader::readSpoRFile(QString path)
         in >> year >> month >> day;
         in >> hour >> minute >> second;
         
-        if ( year == 0 )    // typically from a CMS50D+
+        if ( year == 0 ) {   // typically from a CMS50D+
             m_startTime = QDateTime(QDate::currentDate(), QTime(hour, minute, second));
+            cms50dplus = true;
+        }
         else
             m_startTime = QDateTime(QDate(year, month, day), QTime(hour, minute, second));
 
